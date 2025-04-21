@@ -1,14 +1,9 @@
 import React, { useState } from "react";
 import { useWorkspace, Task } from "../../context/WorkspaceContext";
+import { TaskStatus, taskStatusLabels } from "../../types";
 import TaskColumn from "./TaskColumn";
 import TaskForm from "./TaskForm";
 import "./TaskBoard.css";
-
-const taskStatusLabels: Record<string, string> = {
-  "todo": "To Do",
-  "in-progress": "In Progress",
-  "done": "Done"
-};
 
 const TaskBoard: React.FC = () => {
   const { state, moveTask } = useWorkspace();
@@ -16,8 +11,8 @@ const TaskBoard: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Group tasks by status
-  const tasksByStatus = {
+  // Group tasks by status with proper typing
+  const tasksByStatus: Record<TaskStatus, Task[]> = {
     "todo": tasks.filter(task => task.status === "todo"),
     "in-progress": tasks.filter(task => task.status === "in-progress"),
     "done": tasks.filter(task => task.status === "done")
@@ -31,7 +26,7 @@ const TaskBoard: React.FC = () => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, status: string) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, status: TaskStatus) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData("taskId");
     moveTask(taskId, status);
@@ -61,9 +56,9 @@ const TaskBoard: React.FC = () => {
         {Object.keys(tasksByStatus).map(status => (
           <TaskColumn
             key={status}
-            title={taskStatusLabels[status]}
-            tasks={tasksByStatus[status]}
-            status={status}
+            title={taskStatusLabels[status as TaskStatus]}
+            tasks={tasksByStatus[status as TaskStatus]}
+            status={status as TaskStatus}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDrop}

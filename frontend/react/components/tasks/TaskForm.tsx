@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useWorkspace, Task } from "../../context/WorkspaceContext";
+import { TaskStatus, taskStatusLabels } from "../../types";
 import "./TaskForm.css";
 
 interface TaskFormProps {
@@ -13,7 +14,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onClose }) => {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<string>("todo");
+  const [status, setStatus] = useState<TaskStatus>("todo");
   const [assigneeId, setAssigneeId] = useState<string | undefined>(undefined);
   const [error, setError] = useState("");
 
@@ -111,15 +112,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onClose }) => {
 
           {!task && (
             <div className="form-group">
-              <label htmlFor="status">Status</label>
+              <label htmlFor="status">Status:</label>
               <select
                 id="status"
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(e) => setStatus(e.target.value as TaskStatus)}
               >
-                <option value="todo">To Do</option>
-                <option value="in-progress">In Progress</option>
-                <option value="done">Done</option>
+                {Object.entries(taskStatusLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
               </select>
             </div>
           )}

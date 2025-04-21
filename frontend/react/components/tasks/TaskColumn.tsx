@@ -1,16 +1,17 @@
 import React from "react";
 import { Task, User } from "../../context/WorkspaceContext";
+import { TaskStatus } from "../../types";
 import TaskCard from "./TaskCard";
 import "./TaskColumn.css";
 
 interface TaskColumnProps {
   title: string;
-  status: string;
+  status: TaskStatus;
   tasks: Task[];
   users: User[];
   onDragStart: (e: React.DragEvent<HTMLDivElement>, taskId: string) => void;
   onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDrop: (e: React.DragEvent<HTMLDivElement>, status: string) => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>, status: TaskStatus) => void;
   onEditTask: (task: Task) => void;
 }
 
