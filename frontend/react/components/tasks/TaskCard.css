@@ -47,6 +47,7 @@
 .edit-button:hover {
   opacity: 1;
   transform: scale(1.1);
+  background-color: #c8bebe;
 }
 
 .task-description {
@@ -59,7 +60,7 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-clamp: 3; /* Standard property for compatibility */
+  line-clamp: 3;
 }
 
 .task-meta {
@@ -75,13 +76,15 @@
   gap: 6px;
 }
 
-.assigned-user, .task-creator {
+.assigned-user,
+.task-creator {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.assigned-label, .creator-label {
+.assigned-label,
+.creator-label {
   font-size: 10px;
   color: #888;
   margin-right: 2px;
