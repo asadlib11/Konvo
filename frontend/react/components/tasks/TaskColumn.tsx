@@ -42,7 +42,8 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
               task={task}
               onDragStart={onDragStart}
               onEdit={() => onEditTask(task)}
-              createdBy={users.find(user => user.id === task.createdBy)}
+              createdBy={users.find((user) => user.id === task.createdBy)}
+              users={users}
             />
           ))
         ) : (

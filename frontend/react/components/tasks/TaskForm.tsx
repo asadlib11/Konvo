@@ -8,18 +8,21 @@ interface TaskFormProps {
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ task, onClose }) => {
-  const { createTask, updateTask } = useWorkspace();
+  const { state, createTask, updateTask } = useWorkspace();
+  const { users, currentUser } = state;
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string>("todo");
+  const [assigneeId, setAssigneeId] = useState<string | undefined>(undefined);
   const [error, setError] = useState("");
 
-  // If editing an existing task, populate the form
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description);
       setStatus(task.status);
+      setAssigneeId(task.assigneeId);
     }
   }, [task]);
 
@@ -32,18 +35,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onClose }) => {
     }
 
     if (task) {
-      // Update existing task
       updateTask({
         id: task.id,
         title: title.trim(),
         description: description.trim(),
+        assigneeId,
       });
     } else {
-      // Create new task
       createTask({
         title: title.trim(),
         description: description.trim(),
         status,
+        assigneeId,
       });
     }
 
@@ -84,6 +87,26 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onClose }) => {
               placeholder="Task description"
               rows={4}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="assignee">Assignee</label>
+            <select
+              id="assignee"
+              value={assigneeId || ""}
+              onChange={(e) => {
+                const newValue =
+                  e.target.value === "" ? undefined : e.target.value;
+                setAssigneeId(newValue);
+              }}
+            >
+              <option value="">Unassigned</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} {user.id === currentUser?.id ? "(You)" : ""}
+                </option>
+              ))}
+            </select>
           </div>
 
           {!task && (

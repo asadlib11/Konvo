@@ -16,6 +16,7 @@ export interface Task {
   description: string;
   status: "todo" | "in-progress" | "done";
   createdBy: string;
+  assigneeId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,22 +47,26 @@ type ActionType =
   | { type: "SET_TYPING"; payload: { userId: string; isTyping: boolean } };
 
 // Get persisted user from localStorage if available
-const getPersistedUser = (): User | null => {
+const getPersistedUser = (): { user: User | null; userId: string | null } => {
   try {
     const userData = localStorage.getItem('currentUser');
-    return userData ? JSON.parse(userData) : null;
+    const userId = localStorage.getItem('userId');
+    return { 
+      user: userData ? JSON.parse(userData) : null,
+      userId
+    };
   } catch (error) {
     console.error("Error parsing stored user data:", error);
     localStorage.removeItem('currentUser');
-    return null;
+    localStorage.removeItem('userId');
+    return { user: null, userId: null };
   }
 };
 
 // Initial state
-const initialUser = getPersistedUser();
 const initialState: WorkspaceState = {
   isConnected: false,
-  currentUser: initialUser,
+  currentUser: getPersistedUser().user,
   users: [],
   tasks: [],
   messages: [],
@@ -73,17 +78,15 @@ const initialState: WorkspaceState = {
 const workspaceReducer = (state: WorkspaceState, action: ActionType): WorkspaceState => {
   switch (action.type) {
     case "SET_CONNECTED":
-      return { ...state, isConnected: action.payload };
-
+      return {
+        ...state,
+        isConnected: action.payload,
+      };
     case "SET_CURRENT_USER":
-      // Persist or clear user data in localStorage
-      if (action.payload) {
-        localStorage.setItem('currentUser', JSON.stringify(action.payload));
-      } else {
-        localStorage.removeItem('currentUser');
-      }
-      return { ...state, currentUser: action.payload };
-
+      return {
+        ...state,
+        currentUser: action.payload,
+      };
     case "UPDATE_WORKSPACE":
       return {
         ...state,
@@ -92,10 +95,11 @@ const workspaceReducer = (state: WorkspaceState, action: ActionType): WorkspaceS
         messages: action.payload.messages,
         loading: false,
       };
-
     case "SET_LOADING":
-      return { ...state, loading: action.payload };
-
+      return {
+        ...state,
+        loading: action.payload,
+      };
     case "SET_TYPING":
       return {
         ...state,
@@ -104,7 +108,6 @@ const workspaceReducer = (state: WorkspaceState, action: ActionType): WorkspaceS
           [action.payload.userId]: action.payload.isTyping,
         },
       };
-
     default:
       return state;
   }
@@ -116,8 +119,8 @@ interface WorkspaceContextProps {
   handleLogin: (userData: Omit<User, "id" | "status" | "lastActive">) => void;
   handleLogout: () => void;
   updateUserStatus: (status: "active" | "away" | "do-not-disturb") => void;
-  createTask: (taskData: { title: string; description: string; status?: string }) => void;
-  updateTask: (taskData: { id: string; title?: string; description?: string }) => void;
+  createTask: (taskData: { title: string; description: string; status?: string; assigneeId?: string }) => void;
+  updateTask: (taskData: { id: string; title?: string; description?: string; assigneeId?: string }) => void;
   moveTask: (taskId: string, newStatus: string) => void;
   sendMessage: (message: string) => void;
   setTyping: (isTyping: boolean) => void;
@@ -129,150 +132,151 @@ const WorkspaceContext = createContext<WorkspaceContextProps | undefined>(undefi
 export const WorkspaceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(workspaceReducer, initialState);
 
-  // Effect for setting initial loading state
+  // Connect to socket server
   useEffect(() => {
-    // If there's no persisted user, there's no need to show the loading state
-    if (!state.currentUser) {
-      dispatch({ type: "SET_LOADING", payload: false });
-    }
-  }, []);
+    socketService.init();
 
-  // Effect for handling socket connection and events
-  useEffect(() => {
-    // Connect to the socket server if we have a persisted user
-    if (state.currentUser) {
-      // Connect to the socket server
-      const socket = socketService.connect();
-      
-      if (socket) {
-        // Rejoin the workspace with persisted user data
-        socketService.joinWorkspace({
-          name: state.currentUser.name,
-          avatar: state.currentUser.avatar
-        });
-      } else {
-        // If socket connection fails, clear loading state
-        console.error("Failed to connect to socket server");
-        dispatch({ type: "SET_LOADING", payload: false });
-      }
-    }
-
-    // Set up event listeners
     socketService.onConnect(() => {
-      console.log("Connected to server");
       dispatch({ type: "SET_CONNECTED", payload: true });
+      console.log("Connected to socket server");
+
+      // If user was previously logged in, auto-reconnect
+      const { user, userId } = getPersistedUser();
+      if (user && userId) {
+        // Send the userId along with login to maintain session
+        socketService.joinWorkspace({ 
+          name: user.name, 
+          avatar: user.avatar,
+          userId: userId || undefined // Convert null to undefined if needed
+        });
+      }
     });
 
     socketService.onDisconnect(() => {
-      console.log("Disconnected from server");
       dispatch({ type: "SET_CONNECTED", payload: false });
-      // Also clear loading in case of disconnection
-      dispatch({ type: "SET_LOADING", payload: false });
+      console.log("Disconnected from socket server");
     });
 
     socketService.onWorkspaceUpdate((data) => {
-      console.log("Workspace updated:", data);
       dispatch({
         type: "UPDATE_WORKSPACE",
-        payload: {
-          users: data.users,
-          tasks: data.tasks,
-          messages: data.messages,
-        },
+        payload: data,
       });
+      
+      // Try to identify current user after workspace update
+      const { userId } = getPersistedUser();
+      if (userId) {
+        // Find our user in the updated data
+        const currentUser = data.users.find((user: User) => user.id === userId);
+        if (currentUser) {
+          dispatch({ type: "SET_CURRENT_USER", payload: currentUser });
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+      }
     });
 
-    socketService.onUserTyping((data) => {
+    socketService.onTyping(({ userId, isTyping }) => {
       dispatch({
         type: "SET_TYPING",
-        payload: {
-          userId: data.userId,
-          isTyping: data.isTyping,
-        },
+        payload: { userId, isTyping },
       });
     });
+    
+    // Listen for user ID assignments
+    socketService.onUserId((userId) => {
+      console.log("Received user ID from server:", userId);
+      // Save the user ID in localStorage
+      localStorage.setItem('userId', userId);
+    });
 
-    // Set a timeout to clear loading state if the connection takes too long
-    const loadingTimeout = setTimeout(() => {
-      dispatch({ type: "SET_LOADING", payload: false });
-    }, 5000);
-
-    // Clean up event listeners on component unmount
     return () => {
-      clearTimeout(loadingTimeout);
       socketService.disconnect();
     };
-  }, [state.currentUser?.id]); // Re-run effect if user ID changes
+  }, []);
 
-  // Action handlers
+  // Update currentUser when users change
+  useEffect(() => {
+    if (state.currentUser && state.users.length > 0) {
+      const updatedCurrentUser = state.users.find(
+        (user) => user.name === state.currentUser?.name
+      );
+      if (updatedCurrentUser) {
+        dispatch({ type: "SET_CURRENT_USER", payload: updatedCurrentUser });
+        // Keep persistent record of the user
+        localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUser));
+      }
+    }
+  }, [state.users, state.currentUser]);
+
+  // Handle user login
   const handleLogin = (userData: Omit<User, "id" | "status" | "lastActive">) => {
-    // Set loading while connecting
     dispatch({ type: "SET_LOADING", payload: true });
     
-    socketService.connect();
-    socketService.joinWorkspace(userData);
+    // Get persisted userId if available
+    const { userId } = getPersistedUser();
     
-    const currentUser: User = {
-      id: socketService.getSocketId() || "unknown",
-      name: userData.name,
-      avatar: userData.avatar,
-      status: "active",
-    };
-    
-    dispatch({ type: "SET_CURRENT_USER", payload: currentUser });
+    // Join the workspace with userId if we have one
+    socketService.joinWorkspace({ 
+      ...userData,
+      userId: userId || undefined // Convert null to undefined if needed
+    });
   };
 
+  // Handle user logout
   const handleLogout = () => {
     socketService.disconnect();
+    
+    // Clear user data
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userId');
+    
     dispatch({ type: "SET_CURRENT_USER", payload: null });
-    dispatch({ type: "SET_LOADING", payload: false });
+    window.location.reload(); // Force reload to clean up
   };
 
+  // Update user status
   const updateUserStatus = (status: "active" | "away" | "do-not-disturb") => {
     socketService.updateStatus(status);
-    if (state.currentUser) {
-      const updatedUser = { ...state.currentUser, status };
-      dispatch({ type: "SET_CURRENT_USER", payload: updatedUser });
-    }
   };
 
-  const createTask = (taskData: { title: string; description: string; status?: string }) => {
+  // Create a new task
+  const createTask = (taskData: { title: string; description: string; status?: string; assigneeId?: string }) => {
     socketService.createTask(taskData);
   };
 
-  const updateTask = (taskData: { id: string; title?: string; description?: string }) => {
-    socketService.updateTask(taskData as any); // Type casting to fix TypeScript error
+  // Update an existing task
+  const updateTask = (taskData: { id: string; title?: string; description?: string; assigneeId?: string }) => {
+    socketService.updateTask(taskData);
   };
 
+  // Move a task to a different status
   const moveTask = (taskId: string, newStatus: string) => {
     socketService.moveTask(taskId, newStatus);
   };
 
+  // Send a chat message
   const sendMessage = (message: string) => {
     socketService.sendMessage(message);
   };
 
+  // Update typing status
   const setTyping = (isTyping: boolean) => {
     socketService.setTyping(isTyping);
   };
 
-  return (
-    <WorkspaceContext.Provider
-      value={{
-        state,
-        handleLogin,
-        handleLogout,
-        updateUserStatus,
-        createTask,
-        updateTask,
-        moveTask,
-        sendMessage,
-        setTyping,
-      }}
-    >
-      {children}
-    </WorkspaceContext.Provider>
-  );
+  const value = {
+    state,
+    handleLogin,
+    handleLogout,
+    updateUserStatus,
+    createTask,
+    updateTask,
+    moveTask,
+    sendMessage,
+    setTyping,
+  };
+
+  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 };
 
 // Custom hook to use the context

@@ -56,6 +56,14 @@
   color: #0066cc;
 }
 
+.status-option {
+  color: #4d4b4b;
+
+  &.active {
+    color: #0066cc;
+  }
+}
+
 .status-button {
   display: flex;
   align-items: center;

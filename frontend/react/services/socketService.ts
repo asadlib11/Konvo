@@ -1,26 +1,24 @@
 import { io, Socket } from "socket.io-client";
 
 // Define types for user data and other socket events
-interface UserData {
+export interface UserData {
   name: string;
   avatar: string;
   status?: string;
+  userId?: string; // Add optional userId for reconnection
 }
 
-interface TaskData {
+export interface TaskData {
   id?: string;
   title: string;
   description: string;
   status?: string;
+  assigneeId?: string; // Add support for assignee
 }
 
-interface MessageData {
-  text: string;
-}
-
-interface TaskMoveData {
-  taskId: string;
-  newStatus: string;
+interface TypingData {
+  userId: string;
+  isTyping: boolean;
 }
 
 class SocketService {
@@ -32,7 +30,7 @@ class SocketService {
     this.serverUrl = "http://localhost:3001";
   }
 
-  connect(): Socket | null {
+  init(): Socket | null {
     if (!this.socket) {
       this.socket = io(this.serverUrl);
       console.log("Socket.io initialized");
@@ -52,8 +50,8 @@ class SocketService {
     return this.socket ? this.socket.id : null;
   }
 
-  // Event listeners
   onConnect(callback: () => void): void {
+    if (!this.socket) this.init();
     if (this.socket) {
       this.socket.on("connect", callback);
     }
@@ -71,16 +69,22 @@ class SocketService {
     }
   }
 
-  onUserTyping(
-    callback: (data: { userId: string; isTyping: boolean }) => void
-  ): void {
+  onTyping(callback: (data: TypingData) => void): void {
     if (this.socket) {
       this.socket.on("user:typing", callback);
     }
   }
 
+  // Handle persistent user ID
+  onUserId(callback: (userId: string) => void): void {
+    if (this.socket) {
+      this.socket.on("user:id", callback);
+    }
+  }
+
   // Emit events
   joinWorkspace(userData: UserData): void {
+    if (!this.socket) this.init();
     if (this.socket) {
       this.socket.emit("user:join", userData);
     }
@@ -92,13 +96,13 @@ class SocketService {
     }
   }
 
-  createTask(taskData: TaskData): void {
+  createTask(taskData: Omit<TaskData, 'id'>): void {
     if (this.socket) {
       this.socket.emit("task:create", taskData);
     }
   }
 
-  updateTask(taskData: TaskData): void {
+  updateTask(taskData: { id: string } & Partial<TaskData>): void {
     if (this.socket) {
       this.socket.emit("task:update", taskData);
     }
@@ -106,13 +110,13 @@ class SocketService {
 
   moveTask(taskId: string, newStatus: string): void {
     if (this.socket) {
-      this.socket.emit("task:move", { taskId, newStatus } as TaskMoveData);
+      this.socket.emit("task:move", { taskId, newStatus });
     }
   }
 
-  sendMessage(message: string): void {
+  sendMessage(text: string): void {
     if (this.socket) {
-      this.socket.emit("message:send", { text: message } as MessageData);
+      this.socket.emit("message:send", { text });
     }
   }
 

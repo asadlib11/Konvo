@@ -13,6 +13,7 @@ interface Task {
   description: string;
   status: string;
   createdBy: string;
+  assigneeId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +44,7 @@ export const initialWorkspaceData: WorkspaceData = {
       description: "Add login and registration functionality to the app",
       status: "todo",
       createdBy: "system",
+      assigneeId: undefined,
       createdAt: "2023-01-01T09:00:00.000Z",
       updatedAt: "2023-01-01T09:00:00.000Z",
     },
@@ -52,6 +54,7 @@ export const initialWorkspaceData: WorkspaceData = {
       description: "Create wireframes for the main dashboard",
       status: "in-progress",
       createdBy: "system",
+      assigneeId: undefined,
       createdAt: "2023-01-01T10:00:00.000Z",
       updatedAt: "2023-01-01T14:30:00.000Z",
     },
@@ -61,6 +64,7 @@ export const initialWorkspaceData: WorkspaceData = {
       description: "Address issues with mobile view",
       status: "in-progress",
       createdBy: "system",
+      assigneeId: undefined,
       createdAt: "2023-01-01T11:00:00.000Z",
       updatedAt: "2023-01-01T16:45:00.000Z",
     },
@@ -70,6 +74,7 @@ export const initialWorkspaceData: WorkspaceData = {
       description: "Add new API endpoints to the docs",
       status: "done",
       createdBy: "system",
+      assigneeId: undefined,
       createdAt: "2023-01-01T12:00:00.000Z",
       updatedAt: "2023-01-02T10:15:00.000Z",
     },

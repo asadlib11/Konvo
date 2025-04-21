@@ -7,6 +7,7 @@ interface TaskCardProps {
   onDragStart: (e: React.DragEvent<HTMLDivElement>, taskId: string) => void;
   onEdit: () => void;
   createdBy?: User;
+  users: User[];
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -14,8 +15,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onDragStart,
   onEdit,
   createdBy,
+  users,
 }) => {
-  // Format date to a more readable format
+  const assignee = task.assigneeId
+    ? users.find((user) => user.id === task.assigneeId)
+    : undefined;
+
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
@@ -40,19 +45,44 @@ const TaskCard: React.FC<TaskCardProps> = ({
       </div>
       <p className="task-description">{task.description}</p>
       <div className="task-meta">
-        <div className="task-creator">
-          {createdBy && (
-            <div className="avatar-container">
-              <img
-                src={`/assets/avatars/${createdBy.avatar}.png`}
-                alt={`${createdBy.name}'s avatar`}
-                width="24"
-                height="24"
-              />
+        <div className="task-users">
+          {assignee && (
+            <div
+              className="assigned-user"
+              title={`Assigned to: ${assignee.name}`}
+            >
+              <span className="assigned-label">Assigned:</span>
+              <div className="avatar-container">
+                <img
+                  src={`/assets/avatars/${assignee.avatar}.png`}
+                  alt={`${assignee.name}'s avatar`}
+                  width="24"
+                  height="24"
+                />
+              </div>
+            </div>
+          )}
+          {createdBy && createdBy.id !== (assignee?.id || "") && (
+            <div
+              className="task-creator"
+              title={`Created by: ${createdBy.name}`}
+            >
+              <span className="creator-label">Created by:</span>
+              <div className="avatar-container">
+                <img
+                  src={`/assets/avatars/${createdBy.avatar}.png`}
+                  alt={`${createdBy.name}'s avatar`}
+                  width="24"
+                  height="24"
+                />
+              </div>
             </div>
           )}
         </div>
-        <div className="task-date" title={`Updated: ${formatDate(task.updatedAt)}`}>
+        <div
+          className="task-date"
+          title={`Updated: ${formatDate(task.updatedAt)}`}
+        >
           {formatDate(task.updatedAt)}
         </div>
       </div>
