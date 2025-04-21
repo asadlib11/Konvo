@@ -1,5 +1,6 @@
 import React from "react";
 import { Task, User } from "../../context/WorkspaceContext";
+import UserAvatar from "../shared/UserAvatar";
 import "./TaskCard.css";
 
 interface TaskCardProps {
@@ -52,14 +53,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
               title={`Assigned to: ${assignee.name}`}
             >
               <span className="assigned-label">Assigned:</span>
-              <div className="avatar-container">
-                <img
-                  src={`/assets/avatars/${assignee.avatar}.png`}
-                  alt={`${assignee.name}'s avatar`}
-                  width="24"
-                  height="24"
-                />
-              </div>
+              <UserAvatar
+                name={assignee.name}
+                avatar={assignee.avatar}
+                status={assignee.status}
+                size="small"
+                showStatus={false}
+                className="task-avatar"
+              />
             </div>
           )}
           {createdBy && createdBy.id !== (assignee?.id || "") && (
@@ -68,14 +69,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
               title={`Created by: ${createdBy.name}`}
             >
               <span className="creator-label">Created by:</span>
-              <div className="avatar-container">
-                <img
-                  src={`/assets/avatars/${createdBy.avatar}.png`}
-                  alt={`${createdBy.name}'s avatar`}
-                  width="24"
-                  height="24"
-                />
-              </div>
+              <UserAvatar
+                name={createdBy.name}
+                avatar={createdBy.avatar}
+                status={createdBy.status}
+                size="small"
+                showStatus={false}
+                className="task-avatar"
+              />
             </div>
           )}
         </div>

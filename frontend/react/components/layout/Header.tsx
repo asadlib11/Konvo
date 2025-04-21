@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useWorkspace } from "../../context/WorkspaceContext";
+import UserAvatar from "../shared/UserAvatar";
 import "./Header.css";
 
 const Header: React.FC = () => {
@@ -26,14 +27,14 @@ const Header: React.FC = () => {
       </div>
       <div className="user-controls">
         <div className="current-user">
-          <div className="user-avatar">
-            <img
-              src={`/assets/avatars/${currentUser.avatar}.png`}
-              alt={`${currentUser.name}'s avatar`}
-              width="32"
-              height="32"
-            />
-          </div>
+          <UserAvatar
+            name={currentUser.name}
+            avatar={currentUser.avatar}
+            status={currentUser.status}
+            size="medium"
+            showStatus={false}
+            className="header-avatar"
+          />
           <span className="user-name">{currentUser.name}</span>
         </div>
 

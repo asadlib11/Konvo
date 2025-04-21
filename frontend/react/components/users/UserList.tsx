@@ -1,5 +1,6 @@
 import React from "react";
-import { useWorkspace, User } from "../../context/WorkspaceContext";
+import { useWorkspace } from "../../context/WorkspaceContext";
+import UserAvatar from "../shared/UserAvatar";
 import "./UserList.css";
 
 const UserList: React.FC = () => {
@@ -12,15 +13,13 @@ const UserList: React.FC = () => {
       <div className="users">
         {users.map((user) => (
           <div key={user.id} className="user-item" title={user.name}>
-            <div className="user-avatar">
-              <img
-                src={`/assets/avatars/${user.avatar}.png`}
-                alt={`${user.name}'s avatar`}
-                width="24"
-                height="24"
-              />
-              <span className={`avatar-status-indicator ${user.status}`}></span>
-            </div>
+            <UserAvatar
+              name={user.name}
+              avatar={user.avatar}
+              status={user.status}
+              size="medium"
+              showStatus={true}
+            />
             <div className="user-info">
               <div className="user-name">
                 {user.name} {user.id === currentUser?.id && "(You)"}
