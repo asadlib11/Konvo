@@ -1,11 +1,42 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
-import { socketService } from './services/socketService';
+import React, { useState, useEffect } from "react";
+import { socketService } from "./services/socketService";
 
-function App() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [workspace, setWorkspace] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+// Define types for our application
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  status?: string;
+  lastActive?: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Message {
+  id: string;
+  text: string;
+  userId: string;
+  createdAt: string;
+}
+
+interface Workspace {
+  users: User[];
+  tasks: Task[];
+  messages: Message[];
+}
+
+function App(): React.ReactElement {
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     // Connect to the socket server
@@ -13,17 +44,17 @@ function App() {
 
     // Set up event listeners
     socketService.onConnect(() => {
-      console.log('Connected to server');
+      console.log("Connected to server");
       setIsConnected(true);
     });
 
     socketService.onDisconnect(() => {
-      console.log('Disconnected from server');
+      console.log("Disconnected from server");
       setIsConnected(false);
     });
 
-    socketService.onWorkspaceUpdate((data) => {
-      console.log('Workspace updated:', data);
+    socketService.onWorkspaceUpdate((data: Workspace) => {
+      console.log("Workspace updated:", data);
       setWorkspace(data);
     });
 
@@ -34,11 +65,11 @@ function App() {
   }, []);
 
   // Handle user login
-  const handleLogin = (userData) => {
+  const handleLogin = (userData: Omit<User, "id">): void => {
     socketService.joinWorkspace(userData);
     setCurrentUser({
-      id: socketService.getSocketId(),
-      ...userData
+      id: socketService.getSocketId() || "unknown",
+      ...userData,
     });
   };
 
@@ -60,11 +91,13 @@ function App() {
       <main>
         {!currentUser ? (
           <div className="login-container">
-            <h2>Join Workspace</h2>
+            <h2>Join Workspace TSSS</h2>
             <p>Enter your name and choose an avatar to get started</p>
-            
+
             {/* TODO: Implement login form */}
-            <button onClick={() => handleLogin({ name: 'Test User', avatar: '1' })}>
+            <button
+              onClick={() => handleLogin({ name: "Test User", avatar: "1" })}
+            >
               Join as Test User
             </button>
           </div>
@@ -76,7 +109,7 @@ function App() {
                 <p>There are {workspace.users.length} users online.</p>
                 <p>Tasks: {workspace.tasks.length}</p>
                 <p>Messages: {workspace.messages.length}</p>
-                
+
                 {/* TODO: Implement workspace components */}
               </div>
             ) : (
