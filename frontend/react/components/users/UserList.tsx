@@ -5,7 +5,7 @@ import "./UserList.css";
 
 const UserList: React.FC = () => {
   const { state } = useWorkspace();
-  const { users, currentUser, typingUsers } = state;
+  const { users, currentUser } = state;
 
   return (
     <div className="user-list">
@@ -24,9 +24,6 @@ const UserList: React.FC = () => {
               <div className="user-name">
                 {user.name} {user.id === currentUser?.id && "(You)"}
               </div>
-              {typingUsers[user.id] && (
-                <div className="typing-indicator">typing...</div>
-              )}
             </div>
           </div>
         ))}

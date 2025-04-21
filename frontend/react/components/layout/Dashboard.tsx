@@ -2,6 +2,7 @@ import React from "react";
 import Header from "./Header";
 import UserList from "../users/UserList";
 import TaskBoard from "../tasks/TaskBoard";
+import Chat from "../chat/Chat";
 import "./Dashboard.css";
 
 const Dashboard: React.FC = () => {
@@ -16,6 +17,7 @@ const Dashboard: React.FC = () => {
           <TaskBoard />
         </main>
       </div>
+      <Chat />
     </div>
   );
 };
