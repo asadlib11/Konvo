@@ -40,6 +40,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 .user-avatar img {
@@ -49,7 +50,7 @@
   object-fit: cover;
 }
 
-.status-indicator {
+.avatar-status-indicator {
   position: absolute;
   bottom: 0;
   right: 0;
@@ -59,15 +60,15 @@
   border: 2px solid white;
 }
 
-.status-indicator.active {
+.avatar-status-indicator.active {
   background-color: #4caf50;
 }
 
-.status-indicator.away {
+.avatar-status-indicator.away {
   background-color: #ff9800;
 }
 
-.status-indicator.do-not-disturb {
+.avatar-status-indicator.do-not-disturb {
   background-color: #f44336;
 }
 

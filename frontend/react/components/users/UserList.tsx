@@ -11,19 +11,15 @@ const UserList: React.FC = () => {
       <h3>Team Members</h3>
       <div className="users">
         {users.map((user) => (
-          <div 
-            key={user.id} 
-            className="user-item"
-            title={user.name}
-          >
+          <div key={user.id} className="user-item" title={user.name}>
             <div className="user-avatar">
-              <img 
-                src={`/assets/avatars/${user.avatar}.png`} 
+              <img
+                src={`/assets/avatars/${user.avatar}.png`}
                 alt={`${user.name}'s avatar`}
                 width="24"
                 height="24"
               />
-              <span className={`status-indicator ${user.status}`}></span>
+              <span className={`avatar-status-indicator ${user.status}`}></span>
             </div>
             <div className="user-info">
               <div className="user-name">
