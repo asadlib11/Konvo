@@ -1,0 +1,65 @@
+.user-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* Size variations */
+.user-avatar.small .avatar-image {
+  width: 24px;
+  height: 24px;
+}
+
+.user-avatar.medium .avatar-image {
+  width: 32px;
+  height: 32px;
+}
+
+.user-avatar.large .avatar-image {
+  width: 40px;
+  height: 40px;
+}
+
+.avatar-image {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-status-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Status indicator sizes based on avatar size */
+.user-avatar.small .avatar-status-indicator {
+  width: 8px;
+  height: 8px;
+}
+
+.user-avatar.medium .avatar-status-indicator {
+  width: 10px;
+  height: 10px;
+}
+
+.user-avatar.large .avatar-status-indicator {
+  width: 12px;
+  height: 12px;
+}
+
+/* Status colors */
+.avatar-status-indicator.active {
+  background-color: #4caf50;
+}
+
+.avatar-status-indicator.away {
+  background-color: #ff9800;
+}
+
+.avatar-status-indicator.do-not-disturb {
+  background-color: #f44336;
+}

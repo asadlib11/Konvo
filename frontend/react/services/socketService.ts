@@ -1,28 +1,24 @@
-import { io, Socket } from 'socket.io-client';
+import { io, Socket } from "socket.io-client";
 
-interface UserData {
+// Define types for user data and other socket events
+export interface UserData {
   name: string;
   avatar: string;
-  [key: string]: any;
+  status?: string;
+  userId?: string; // Add optional userId for reconnection
 }
 
-interface TaskData {
+export interface TaskData {
   id?: string;
   title: string;
-  description?: string;
-  status: string;
-  assignedTo?: string;
-  [key: string]: any;
+  description: string;
+  status?: string;
+  assigneeId?: string; // Add support for assignee
 }
 
-interface MessageData {
-  text: string;
-  [key: string]: any;
-}
-
-interface TaskMoveData {
-  taskId: string;
-  newStatus: string;
+interface TypingData {
+  userId: string;
+  isTyping: boolean;
 }
 
 class SocketService {
@@ -31,13 +27,13 @@ class SocketService {
 
   constructor() {
     this.socket = null;
-    this.serverUrl = 'http://localhost:3001';
+    this.serverUrl = "http://localhost:3001";
   }
 
-  connect(): Socket | null {
+  init(): Socket | null {
     if (!this.socket) {
       this.socket = io(this.serverUrl);
-      console.log('Socket.io initialized');
+      console.log("Socket.io initialized");
     }
     return this.socket;
   }
@@ -46,79 +42,87 @@ class SocketService {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
-      console.log('Socket.io disconnected');
+      console.log("Socket.io disconnected");
     }
   }
 
-  getSocketId(): string | null {
+  getSocketId(): string | null | undefined {
     return this.socket ? this.socket.id : null;
   }
 
-  // Event listeners
   onConnect(callback: () => void): void {
+    if (!this.socket) this.init();
     if (this.socket) {
-      this.socket.on('connect', callback);
+      this.socket.on("connect", callback);
     }
   }
 
   onDisconnect(callback: () => void): void {
     if (this.socket) {
-      this.socket.on('disconnect', callback);
+      this.socket.on("disconnect", callback);
     }
   }
 
   onWorkspaceUpdate(callback: (data: any) => void): void {
     if (this.socket) {
-      this.socket.on('workspace:update', callback);
+      this.socket.on("workspace:update", callback);
     }
   }
 
-  onUserTyping(callback: (data: { userId: string, isTyping: boolean }) => void): void {
+  onTyping(callback: (data: TypingData) => void): void {
     if (this.socket) {
-      this.socket.on('user:typing', callback);
+      this.socket.on("user:typing", callback);
+    }
+  }
+
+  // Handle persistent user ID
+  onUserId(callback: (userId: string) => void): void {
+    if (this.socket) {
+      this.socket.on("user:id", callback);
     }
   }
 
   // Emit events
   joinWorkspace(userData: UserData): void {
+    if (!this.socket) this.init();
     if (this.socket) {
-      this.socket.emit('user:join', userData);
+      this.socket.emit("user:join", userData);
     }
   }
 
   updateStatus(status: string): void {
     if (this.socket) {
-      this.socket.emit('user:status', status);
+      this.socket.emit("user:status", status);
     }
   }
 
-  createTask(taskData: TaskData): void {
+  createTask(taskData: Omit<TaskData, 'id'>): void {
     if (this.socket) {
-      this.socket.emit('task:create', taskData);
+      this.socket.emit("task:create", taskData);
     }
   }
 
-  updateTask(taskData: TaskData): void {
+  updateTask(taskData: { id: string } & Partial<TaskData>): void {
     if (this.socket) {
-      this.socket.emit('task:update', taskData);
+      this.socket.emit("task:update", taskData);
     }
   }
 
   moveTask(taskId: string, newStatus: string): void {
     if (this.socket) {
-      this.socket.emit('task:move', { taskId, newStatus } as TaskMoveData);
+      this.socket.emit("task:move", { taskId, newStatus });
     }
   }
 
-  sendMessage(message: string): void {
+  sendMessage(text: string): void {
     if (this.socket) {
-      this.socket.emit('message:send', { text: message } as MessageData);
+      this.socket.emit("message:send", { text });
     }
   }
 
   setTyping(isTyping: boolean): void {
     if (this.socket) {
-      this.socket.emit('user:typing', isTyping);
+      this.socket.emit("user:typing", isTyping);
     }
   }
 }
